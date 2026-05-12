@@ -12,9 +12,9 @@ service cloud.firestore {
     function existing() { return resource.data; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
     
-    // RBAC - Only if admin role is established in /admins/{uid}
+    // RBAC - Only if admin role is established in /admins/{uid} or email matches
     function isAdmin() { 
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); 
+      return isSignedIn() && (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) || request.auth.token.email == "ssripada16@gmail.com"); 
     }
 
     // 2. RSVP Validation
@@ -29,7 +29,7 @@ service cloud.firestore {
     }
 
     match /rsvps/{rsvpId} {
-      // allow read: if isAdmin(); // Only admins can see the guest list
+      allow read: if isAdmin(); // Only admins can see the guest list
       allow create: if isValidRSVP(incoming()) && isValidId(rsvpId);
       allow update, delete: if false; // RSVPs are immutable for guests
     }

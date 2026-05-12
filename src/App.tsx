@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Hero } from './components/Hero.tsx';
 import { Navbar } from './components/Navbar.tsx';
 import { CoupleIntro } from './components/CoupleIntro.tsx';
@@ -15,8 +16,9 @@ import { RSVP } from './components/RSVP.tsx';
 import { Footer } from './components/Footer.tsx';
 import { PetalBackground } from './components/PetalBackground.tsx';
 import { motion, useScroll, useSpring } from 'motion/react';
+import { AdminDashboard } from './pages/AdminDashboard.tsx';
 
-export default function App() {
+function WeddingSite() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -48,5 +50,16 @@ export default function App() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<WeddingSite />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
