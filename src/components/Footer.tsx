@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import React from 'react';
 import { Instagram, Facebook, Twitter, Heart } from 'lucide-react';
-
+import { Link } from 'react-router-dom';
 export const Footer: React.FC = () => {
   return (
     <footer className="bg-royal-maroon text-cream py-20 px-6 relative overflow-hidden">
@@ -15,7 +15,9 @@ export const Footer: React.FC = () => {
            className="space-y-4"
         >
           <div className="w-16 h-16 bg-cream/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Heart className="w-8 h-8 text-royal-gold fill-royal-gold" />
+            <Link to="/admin">
+              <Heart className="w-8 h-8 text-royal-gold fill-royal-gold hover:scale-110 hover:drop-shadow-lg transition-all cursor-pointer" />
+            </Link>
           </div>
           <h2 className="text-5xl font-accent text-royal-gold italic">Thank You</h2>
           <p className="text-sandalwood font-serif text-xl tracking-widest uppercase mt-4">

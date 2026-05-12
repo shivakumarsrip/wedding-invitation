@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { signInWithPopup, onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { db, auth, googleProvider } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
@@ -11,53 +9,83 @@ interface RSVPData {
   guests: string;
   attendance: 'yes' | 'no';
   message: string;
-  createdAt: any;
+  created_at: string;
 }
 
 export const AdminDashboard: React.FC = () => {
   const [rsvps, setRsvps] = useState<RSVPData[]>([]);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     if (!user) return;
 
-    const q = query(collection(db, 'rsvps'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data: RSVPData[] = [];
-      snapshot.forEach((doc) => {
-        data.push({ id: doc.id, ...doc.data() } as RSVPData);
-      });
-      setRsvps(data);
-      setError(null);
-    }, (err) => {
-      console.error("Error fetching RSVPs:", err);
-      setError("Failed to fetch RSVPs. You might not have admin permissions.");
-    });
+    const fetchRsvps = async () => {
+      const { data, error } = await supabase
+        .from('rsvps')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching RSVPs:", error);
+        setError("Failed to fetch RSVPs. You might not have admin permissions.");
+      } else {
+        setRsvps(data || []);
+        setError(null);
+      }
+    };
 
-    return () => unsubscribe();
+    fetchRsvps();
+
+    const channel = supabase
+      .channel('public:rsvps')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rsvps' },
+        () => {
+          fetchRsvps();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const handleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/admin`
+        }
+      });
+      if (error) throw error;
     } catch (error) {
       console.error("Error signing in", error);
       setError("Failed to sign in. Please try again.");
     }
   };
 
-  const handleLogout = () => {
-    signOut(auth);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
   const stats = {
@@ -65,7 +93,6 @@ export const AdminDashboard: React.FC = () => {
     attending: rsvps.filter(r => r.attendance === 'yes').length,
     notAttending: rsvps.filter(r => r.attendance === 'no').length,
     totalGuests: rsvps.filter(r => r.attendance === 'yes').reduce((sum, r) => {
-      // Parse guest count, handle edge case where it might not be a direct number string (e.g. "1", "2")
       const num = parseInt(r.guests);
       return sum + (isNaN(num) ? 0 : num);
     }, 0)
@@ -106,7 +133,6 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-cream p-6 md:p-12">
       <div className="max-w-6xl mx-auto space-y-12">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-royal-maroon/10 pb-8">
           <div>
             <h1 className="text-4xl font-serif text-royal-maroon mb-2">RSVP Dashboard</h1>
@@ -131,7 +157,6 @@ export const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <motion.div initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} className="glass-card bg-sandalwood/20 p-6 rounded-2xl">
             <h3 className="text-sm font-semibold uppercase tracking-widest text-royal-maroon/70 mb-2">Total RSVPs</h3>
@@ -151,7 +176,6 @@ export const AdminDashboard: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Data Table */}
         <div className="glass-card rounded-2xl overflow-hidden bg-white/50">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -186,7 +210,7 @@ export const AdminDashboard: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-royal-maroon/60">
-                        {rsvp.createdAt ? new Date(rsvp.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
+                        {rsvp.created_at ? new Date(rsvp.created_at).toLocaleDateString() : 'Just now'}
                       </td>
                       <td className="px-6 py-4 text-sm text-royal-maroon/80 max-w-xs truncate" title={rsvp.message}>
                         {rsvp.message || '-'}

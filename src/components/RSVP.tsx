@@ -1,9 +1,7 @@
 import { motion } from 'motion/react';
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-
+import { supabase } from '../lib/supabase';
 export const RSVP: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -19,14 +17,16 @@ export const RSVP: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const path = 'rsvps';
-      await addDoc(collection(db, path), {
-        name: formData.name,
-        guests: formData.guests,
-        attendance: formData.attendance,
-        message: formData.message,
-        createdAt: serverTimestamp()
-      });
+      const { error } = await supabase.from('rsvps').insert([
+        {
+          name: formData.name,
+          guests: formData.guests,
+          attendance: formData.attendance,
+          message: formData.message,
+        }
+      ]);
+
+      if (error) throw error;
 
       setIsSubmitted(true);
       confetti({
@@ -36,7 +36,8 @@ export const RSVP: React.FC = () => {
         colors: ['#D4AF37', '#800020', '#FFFDD0']
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'rsvps');
+      console.error('Supabase Error: ', error);
+      alert('Failed to submit RSVP. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
