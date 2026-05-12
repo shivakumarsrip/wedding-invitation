@@ -43,7 +43,7 @@ export const Countdown: React.FC = () => {
       {/* Background with overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1549413635-188ae046fa4a?auto=format&fit=crop&q=80&w=2000"
+          src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=2000"
           alt="Wedding Decor"
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
