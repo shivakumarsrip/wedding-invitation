@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import React, { useState, useEffect } from 'react';
 
 export const Countdown: React.FC = () => {
-  const targetDate = new Date('2026-11-25T10:00:00').getTime();
+  const targetDate = new Date('2026-06-25T10:00:00').getTime();
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -42,9 +42,9 @@ export const Countdown: React.FC = () => {
     <section className="py-20 relative overflow-hidden">
       {/* Background with overlay */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1549413635-188ae046fa4a?auto=format&fit=crop&q=80&w=2000" 
-          alt="Wedding Decor" 
+        <img
+          src="https://images.unsplash.com/photo-1549413635-188ae046fa4a?auto=format&fit=crop&q=80&w=2000"
+          alt="Wedding Decor"
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
         />
@@ -52,7 +52,7 @@ export const Countdown: React.FC = () => {
       </div>
 
       <div className="max-w-4xl mx-auto relative z-10 px-6 text-center">
-        <motion.h2 
+        <motion.h2
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           className="text-cream font-accent text-4xl md:text-5xl mb-12"
